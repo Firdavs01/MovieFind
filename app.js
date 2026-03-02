@@ -3,14 +3,26 @@
 const inputElement = document.querySelector("#input");
 const buttonElement = document.querySelector("#button");
 const movieCardsElement = document.querySelector("#movie__cards");
-// const closeModalBtnElement = document.querySelector("#closeModalBtn");
+
+function debounce(fn, delay) {
+  let timer = null;
+
+  return function(...args) {
+    clearTimeout(timer)
+
+    timer = setTimeout(() => {
+      fn(...args)
+    }, delay)
+  }
+}
 
 async function searchMovies(query) {
   try {
     const response = await fetch(
       `https://api.tvmaze.com/search/shows?q=${query}`,
     );
-    if (!response) return;
+
+    if (!response.ok) return;
 
     const data = await response.json();
     const dataupd = data.map((item) => item.show);
@@ -22,47 +34,60 @@ async function searchMovies(query) {
   }
 }
 
+const debounceSearch = debounce(searchMovies, 500)
+
 function cartRender(movies) {
   movieCardsElement.innerHTML = ''
 
-  const div = document.createElement("div");
   movies.forEach((movie) => {
     const divS = document.createElement("div");
     divS.classList.add("card");
 
     divS.innerHTML = `
-        <img src="${movie.image.medium}">
-        <h3>${movie.name}</h3>
-        <p>rating: ${movie.rating.average}</p>
+      <img src="${movie.image?.medium || ""}">
+      <h3>${movie.name}</h3>
+      <p>rating: ${movie.rating?.average || "N/A"}</p>
     `;
 
-    div.appendChild(divS);
-  });
+    divS.addEventListener("click", () => {
+      renderModal(movie)
+    })
 
-  // div.addEventListener("click", () => {
-  //   renderModal(movies[i].show)
-  // })
-  movieCardsElement.appendChild(div);
+    movieCardsElement.appendChild(divS);
+  });
 }
 
-buttonElement.addEventListener("click", () => {
+buttonElement.addEventListener("click", (e) => {
   const inputElementValue = inputElement.value;
-  searchMovies(inputElementValue);
+  debounceSearch(inputElementValue)
   inputElement.value = ''
 });
 
-// function renderModal(movie) {
-//   const modal = document.createElement('div')
-//   modal.classList.add('modal__info')
-//   movie.forEach(movieDetails => {
-//     modal.innerHTML = `
-//       <button id="closeModalBtn">X</button>
-//       <h3>The movie details:</h3>
-//       <p>Premiered: ${movieDetails.premiered}</p>
-//     `
-//   })
-//   closeModalBtnElement.addEventListener("click", () => {
-//     modal.remove()
-//   })
-//   document.body.appendChild(modal)
-// }
+function renderModal(movie) {
+  const oldModal = document.querySelector('.modal__info')
+  if (oldModal) oldModal.remove()
+
+  const modal = document.createElement('div')
+  modal.classList.add('modal__info')
+
+  modal.innerHTML = `
+    <button id="closeBtn">X</button>
+    <h3>The movie details:</h3>
+    <p>Premiered: ${movie.premiered}</p>
+  `
+  document.body.appendChild(modal)
+
+  const closeModalBtnElement = modal.querySelector("#closeBtn");
+
+  closeModalBtnElement.addEventListener("click", () => {
+    modal.remove()
+  })
+}
+
+inputElement.addEventListener("keydown", (e) => {
+  if (e.key === 'Enter') {
+    const inputElementValue = inputElement.value;
+    searchMovies(inputElementValue);
+    inputElement.value = ''
+  }
+})
