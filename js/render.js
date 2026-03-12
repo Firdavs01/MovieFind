@@ -41,7 +41,3 @@ function renderModal(movie) {
     modal.remove()
   })
 }
-
-export {
-  cartRender
-}

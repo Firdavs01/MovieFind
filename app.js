@@ -21,3 +21,4 @@ inputElement.addEventListener("keydown", (e) => {
     inputElement.value = ''
   }
 })
+

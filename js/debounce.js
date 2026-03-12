@@ -12,8 +12,6 @@ function debounce(fn, delay) {
   }
 }
 
-
-
 const debounceSearch = debounce(searchMovies, 500)
 
 export {debounceSearch}
